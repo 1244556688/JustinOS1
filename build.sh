@@ -6,6 +6,7 @@ lb clean || true
 
 echo "[JustinOS Build] 初始化 Live-Build 設定..."
 lb config \
+    --mode debian \
     --distribution bookworm \
     --architecture amd64 \
     --archive-areas "main contrib non-free non-free-firmware" \
