@@ -1,0 +1,39 @@
+#!/bin/bash
+set -e
+echo "[JustinOS Hook] 開始設定系統 UI 與環境..."
+
+echo "/usr/sbin/sddm" > /etc/X11/default-display-manager
+systemctl enable sddm.service
+systemctl enable NetworkManager.service
+plymouth-set-default-theme -R bgrt || true
+
+echo "[JustinOS Hook] 配置紫青色霓虹玻璃 UI..."
+if [ ! -d "/usr/share/themes/Sweet" ]; then
+    wget -qO- https://github.com/EliverLara/Sweet/releases/download/v4.0/Sweet-Dark.tar.xz | tar xJ -C /usr/share/themes/ || true
+fi
+
+if [ ! -d "/usr/share/icons/candy-icons" ]; then
+    wget -qO- https://github.com/EliverLara/candy-icons/archive/refs/heads/master.tar.gz | tar xz -C /usr/share/icons/ || true
+    mv /usr/share/icons/candy-icons-master /usr/share/icons/candy-icons || true
+fi
+
+mkdir -p /etc/skel/.config
+cat <<'INI' > /etc/skel/.config/kdeglobals
+[General]
+ColorScheme=Sweet
+Name=Justin OS Default
+
+[Icons]
+Theme=candy-icons
+INI
+
+cat <<'INI' > /etc/skel/.config/kwinrc
+[Desktops]
+Number=1
+
+[Plugins]
+kwin4_effect_translucencyEnabled=true
+blurEnabled=true
+INI
+
+echo "[JustinOS Hook] UI 設定完成。"

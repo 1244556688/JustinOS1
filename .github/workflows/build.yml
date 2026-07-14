@@ -1,0 +1,53 @@
+name: Build Justin OS ISO
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 取得專案程式碼
+        uses: actions/checkout@v4
+
+      - name: 🛠️ 安裝建置依賴工具
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build debootstrap xorriso squashfs-tools curl git zstd
+
+      - name: 🚀 執行 Justin OS 自動建置腳本
+        run: |
+          chmod +x auto-build.sh build.sh
+          sudo ./auto-build.sh
+
+      - name: 📦 壓縮 ISO 檔案
+        run: |
+          ISO_FILE=$(ls *.iso | head -n 1)
+          zstd -T0 -10 "$ISO_FILE" -o JustinOS-v1.0.iso.zst
+
+      - name: 📤 上傳 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JustinOS-v1.0-ISO
+          path: JustinOS-v1.0.iso.zst
+          retention-days: 7
+
+      - name: 🏷️ 建立 GitHub Release 並上傳 ISO
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "Justin OS v1.0 (Build ${{ github.run_number }})"
+          body: |
+            ## Justin OS v1.0
+            - 基於 Debian 12 Bookworm
+            - KDE Plasma 玻璃霓虹科技風
+            - 自動化 CI/CD 建置
+          files: |
+            *.iso
