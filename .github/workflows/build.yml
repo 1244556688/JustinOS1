@@ -1,16 +1,32 @@
-name: Build ISO
-on: [push]
+name: Build JustinOS ISO
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # 讓你可以手動在網頁按按鈕觸發編譯
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install live-build
-        run: sudo apt-get update && sudo apt-get install -y live-build
-      - name: Build
-        run: sudo ./build.sh
-      - name: Upload ISO
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          # 這裡必須包含 syslinux-utils，才能解決 isohybrid 找不到的問題
+          sudo apt-get install -y live-build syslinux-utils xorriso grub-efi-amd64-bin debootstrap
+
+      - name: Build ISO
+        run: |
+          # 確保腳本有執行權限
+          chmod +x build.sh
+          # 執行你的編譯腳本
+          sudo ./build.sh
+
+      - name: Upload ISO Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: JustinOS-ISO
+          name: JustinOS_Final_ISO
           path: JustinOS_Final.iso
