@@ -4,16 +4,12 @@ lb clean || true
 lb config \
     --mode debian \
     --distribution bookworm \
-    --distribution-security "bookworm-security" \
-    --parent-distribution-security "bookworm-security" \
-    --mirror-chroot-security "http://security.debian.org/debian-security" \
-    --parent-mirror-chroot-security "http://security.debian.org/debian-security" \
-    --mirror-binary-security "http://security.debian.org/debian-security" \
-    --parent-mirror-binary-security "http://security.debian.org/debian-security" \
     --architecture amd64 \
     --archive-areas "main contrib non-free non-free-firmware" \
     --apt-indices false \
     --memtest none \
+    --security false \
+    --updates false \
     --iso-volume "JustinOS_Live" \
     --iso-application "Justin OS" \
     --iso-publisher "Justin OS Project"
