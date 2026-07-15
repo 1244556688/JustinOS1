@@ -1,30 +1,16 @@
-name: Build Justin OS ISO
-
-on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
-
+name: Build ISO
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y live-build nasm xorriso grub-pc-bin grub-efi-amd64-bin mtools dosfstools
-
-      # 💥 插入免密鑰的 tmate 遠端偵錯點
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      - uses: actions/checkout@v4
+      - name: Install live-build
+        run: sudo apt-get update && sudo apt-get install -y live-build
+      - name: Build
+        run: sudo ./build.sh
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
         with:
-          limit-access-to-actor: false
-        timeout-minutes: 30
-
-      - name: Build ISO
-        run: |
-          sudo chmod +x build.sh
-          sudo ./build.sh
+          name: JustinOS-ISO
+          path: JustinOS_Final.iso
