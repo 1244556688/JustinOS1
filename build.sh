@@ -5,8 +5,11 @@ echo "[JustinOS Build] 清理舊的建置檔案..."
 lb clean || true
 
 echo "[JustinOS Build] 初始化 Live-Build 設定..."
+# 這裡已加入 --mode debian 與正確的 Debian 12 安全更新源
 lb config \
     --mode debian \
+    --mirror-security "http://security.debian.org/debian-security" \
+    --parent-mirror-security "http://security.debian.org/debian-security" \
     --distribution bookworm \
     --architecture amd64 \
     --archive-areas "main contrib non-free non-free-firmware" \
