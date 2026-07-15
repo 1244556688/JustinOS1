@@ -1,34 +1,39 @@
 #!/bin/bash
 set -e
-lb clean || true
-lb config \
+
+echo "--- 1. 檢查並安裝必要工具 (包含 live-build) ---"
+sudo apt-get update
+# 加入 live-build 安裝命令
+sudo apt-get install -y live-build syslinux-utils xorriso grub-efi-amd64-bin
+
+echo "--- 2. 強制清理舊殘留檔案 ---"
+sudo lb clean --all || true
+sudo rm -rf binary/ cache/ chroot/ .build/ config/
+
+echo "--- 3. 進行 Live Build 設定 ---"
+sudo lb config noauto \
     --mode debian \
+    --architectures amd64 \
     --distribution bookworm \
-    --architecture amd64 \
-    --archive-areas "main contrib non-free non-free-firmware" \
-    --apt-indices false \
-    --memtest none \
+    --binary-images iso-hybrid \
+    --bootloader grub-efi \
     --security false \
-    --updates false \
-    --iso-volume "JustinOS_Live" \
-    --iso-application "Justin OS" \
-    --iso-publisher "Justin OS Project"
+    --linux-packages none \
+    --mirror-bootstrap http://deb.debian.org/debian \
+    --mirror-chroot http://deb.debian.org/debian \
+    --mirror-binary http://deb.debian.org/debian
+
+echo "--- 4. 寫入套件列表 ---"
 mkdir -p config/package-lists
-cp config/packages.list.chroot config/package-lists/justinos.list.chroot
-CHROOT_DIR="config/includes.chroot/usr/share"
-mkdir -p config/includes.chroot/etc/skel/.config
-mkdir -p config/hooks/normal
-mkdir -p $CHROOT_DIR/wallpapers/JustinOS
-mkdir -p $CHROOT_DIR/themes
-mkdir -p $CHROOT_DIR/plymouth/themes
-[ -d "wallpapers/" ] && cp -r wallpapers/* $CHROOT_DIR/wallpapers/JustinOS/ || true
-[ -d "themes/" ] && cp -r themes/* $CHROOT_DIR/themes/ || true
-[ -d "plymouth/" ] && cp -r plymouth/* $CHROOT_DIR/plymouth/themes/ || true
-cp config/setup-ui.sh.chroot config/hooks/normal/0100-setup-ui.hook.chroot
-chmod +x config/hooks/normal/0100-setup-ui.hook.chroot
-lb build
-if ls live-image-amd64.hybrid.iso 1> /dev/null 2>&1; then
-    mv live-image-amd64.hybrid.iso JustinOS-v1.0.iso
-else
-    exit 1
-fi
+echo "linux-image-amd64 live-boot live-config" | sudo tee config/package-lists/my-packages.list.chroot
+
+echo "--- 5. 開始編譯 chroot 與 binary 結構 ---"
+sudo lb build
+
+echo "--- 6. 使用 grub-mkrescue 進行最終 ISO 封裝 ---"
+# 如果沒有安裝 grub-mkrescue 的額外套件，這步可能會報錯，確保上面有安裝 grub-efi-amd64-bin
+sudo grub-mkrescue -o JustinOS_Final.iso binary/
+
+echo "--- 編譯完成！---"
+echo "產出的檔案名稱：JustinOS_Final.iso"
+ls -lh JustinOS_Final.iso
