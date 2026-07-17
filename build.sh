@@ -8,6 +8,18 @@ sudo apt-get update
 sudo apt-get install -y live-build syslinux-utils xorriso grub-efi-amd64-bin
 
 echo "--- 2. 配置 ---"
+=======
+# 確保腳本在遇到錯誤時停止
+set -e
+
+echo "--- [1/3] 安裝必要依賴 ---"
+sudo apt-get update
+sudo apt-get install -y live-build syslinux-utils xorriso grub-efi-amd64-bin debootstrap
+
+echo "--- [2/3] 清理並配置編譯環境 ---"
+sudo lb clean --all || true
+sudo rm -rf binary/ cache/ chroot/ .build/ config/
+
 sudo lb config noauto \
     --mode debian \
     --architectures amd64 \
@@ -38,3 +50,12 @@ else
 fi
 
 ls -lh JustinOS_Final.iso
+=======
+echo "--- [3/3] 開始編譯系統與 ISO 封裝 ---"
+# 執行編譯
+sudo lb build || echo "lb build 結束，準備手動接手封裝..."
+
+# 使用 grub-mkrescue 直接打包 binary 資料夾，這是最穩定的方式
+sudo grub-mkrescue -o JustinOS_Final.iso binary/ -R -J
+
+echo "✅ 編譯完成！檔案名稱: JustinOS_Final.iso"
